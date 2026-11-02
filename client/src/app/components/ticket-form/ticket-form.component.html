@@ -1,0 +1,114 @@
+<div *ngIf="isOpen" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>{{ isEditing ? 'Edit Ticket' : 'Create New Ticket' }}</h3>
+      <button type="button" (click)="onCancel()" class="close-btn" aria-label="Close modal">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <form
+      data-testid="ticket-form"
+      (ngSubmit)="onSubmit()"
+      class="modal-form"
+    >
+      <div class="form-group">
+        <label for="ticket-title-input">Title *</label>
+        <input
+          id="ticket-title-input"
+          type="text"
+          data-testid="ticket-title-input"
+          [(ngModel)]="title"
+          (input)="validateTitle()"
+          name="title"
+          placeholder="Brief summary of the issue (3-100 characters)"
+          required
+        />
+        <div
+          *ngIf="titleError"
+          data-testid="ticket-title-error"
+          role="alert"
+          class="field-error"
+        >
+          {{ titleError }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <label for="ticket-description-input" style="margin-bottom: 0;">Description</label>
+          <span class="char-count" style="font-size: 0.75rem; color: #94a3b8;">
+            {{ (description || '').length }}/500
+          </span>
+        </div>
+        <textarea
+          id="ticket-description-input"
+          data-testid="ticket-description-input"
+          [(ngModel)]="description"
+          maxlength="500"
+          name="description"
+          placeholder="Provide additional details, reproduction steps, or context (max 500 characters)"
+        ></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="ticket-priority-select">Priority</label>
+          <select
+            id="ticket-priority-select"
+            data-testid="ticket-priority-select"
+            [(ngModel)]="priority"
+            name="priority"
+            class="native-select"
+          >
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="ticket-status-select">Status</label>
+          <select
+            id="ticket-status-select"
+            data-testid="ticket-status-select"
+            [(ngModel)]="status"
+            name="status"
+            class="native-select"
+          >
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Closed">Closed</option>
+          </select>
+        </div>
+      </div>
+
+      <div *ngIf="serverError" role="alert" class="alert-box alert-danger">
+        {{ serverError }}
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          (click)="onCancel()"
+          class="btn btn-secondary"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          data-testid="ticket-submit"
+          class="btn btn-primary"
+          [disabled]="isSubmitting"
+        >
+          {{ isSubmitting ? 'Saving...' : 'Save Ticket' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

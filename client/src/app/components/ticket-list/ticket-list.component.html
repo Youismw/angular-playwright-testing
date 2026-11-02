@@ -1,0 +1,177 @@
+<div class="dashboard-layout">
+  <app-header
+    variant="dashboard"
+    badgeText="CORE TRACKER"
+    [userEmail]="userEmail"
+    [userRole]="userRole"
+    (logout)="onLogout()"
+  ></app-header>
+
+  <main class="content-container">
+    <section class="toolbar-section">
+      <div class="toolbar-left">
+        <h2>Support Tickets</h2>
+        <p class="section-subtitle">Track, filter, and resolve technical issues with architectural precision</p>
+      </div>
+
+      <div class="toolbar-right">
+        <button
+          type="button"
+          data-testid="ticket-new"
+          (click)="openCreateModal()"
+          class="btn btn-primary"
+        >
+          + Create Ticket
+        </button>
+      </div>
+    </section>
+
+    <!-- Metrics Summary Bar -->
+    <div class="metrics-bar">
+      <div class="metric-card" (click)="selectTab('All')" [class.active-metric]="selectedStatus === 'All'">
+        <span class="metric-val">{{ ticketStats().total }}</span>
+        <span class="metric-lbl">Total</span>
+      </div>
+      <div class="metric-card" (click)="selectTab('Open')" [class.active-metric]="selectedStatus === 'Open'">
+        <span class="metric-val text-blue">{{ ticketStats().open }}</span>
+        <span class="metric-lbl">Open</span>
+      </div>
+      <div class="metric-card" (click)="selectTab('In Progress')" [class.active-metric]="selectedStatus === 'In Progress'">
+        <span class="metric-val text-amber">{{ ticketStats().inProgress }}</span>
+        <span class="metric-lbl">In Progress</span>
+      </div>
+      <div class="metric-card" (click)="selectTab('Resolved')" [class.active-metric]="selectedStatus === 'Resolved'">
+        <span class="metric-val text-emerald">{{ ticketStats().resolved }}</span>
+        <span class="metric-lbl">Resolved</span>
+      </div>
+    </div>
+
+    <!-- Filter & Search Controls Toolbar -->
+    <div class="controls-toolbar">
+      <!-- Live Search Bar inspired by mean stack by hand -->
+      <div class="search-bar-wrap">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search by title or description..."
+          class="search-input"
+          data-testid="ticket-search"
+        />
+        <button
+          *ngIf="searchQuery()"
+          type="button"
+          (click)="clearSearch()"
+          class="search-clear-btn"
+          title="Clear search"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Segmented Status Tabs inspired by mean stack by hand -->
+      <div class="filter-tabs">
+        <button
+          *ngFor="let tab of statusTabs"
+          type="button"
+          class="tab-btn"
+          [class.active]="selectedStatus === tab"
+          (click)="selectTab(tab)"
+        >
+          {{ tab }}
+        </button>
+      </div>
+
+      <!-- Native Select Filter (Synchronized, preserves CONTRACT.md & Playwright data-testid) -->
+      <div class="filter-wrapper">
+        <label for="status-filter-select" class="filter-label">Quick Select</label>
+        <select
+          id="status-filter-select"
+          data-testid="status-filter"
+          [(ngModel)]="selectedStatus"
+          (change)="onFilterChange()"
+          class="native-select"
+        >
+          <option value="All">All Statuses</option>
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading()" data-testid="list-loading" class="loading-state">
+      <div class="spinner"></div>
+      <span>Loading ticket stream...</span>
+    </div>
+
+    <!-- Empty State (No tickets in DB or matching active status filter) -->
+    <div
+      *ngIf="!loading() && tickets().length === 0"
+      data-testid="ticket-empty"
+      class="empty-card"
+    >
+      <div class="empty-icon-wrap">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="16" rx="1"/>
+          <path d="M7 8h10M7 12h6M7 16h4"/>
+        </svg>
+      </div>
+      <h3>No tickets found</h3>
+      <p>No tickets match the selected filter or your account has no tickets.</p>
+    </div>
+
+    <!-- Search Empty State (Tickets exist but none match search keyword) -->
+    <div
+      *ngIf="!loading() && tickets().length > 0 && filteredTickets().length === 0"
+      class="empty-card"
+    >
+      <div class="empty-icon-wrap">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      <h3>No matching tickets</h3>
+      <p>No tickets match the search query "{{ searchQuery() }}".</p>
+      <button type="button" (click)="clearSearch()" class="btn btn-secondary btn-sm" style="margin-top: 1rem;">
+        Clear Search
+      </button>
+    </div>
+
+    <!-- Ticket List Grid -->
+    <div
+      *ngIf="!loading() && filteredTickets().length > 0"
+      data-testid="ticket-list"
+      class="ticket-grid"
+    >
+      <app-ticket
+        *ngFor="let ticket of filteredTickets()"
+        [ticket]="ticket"
+        (edit)="openEditModal($event)"
+        (delete)="openDeleteModal($event)"
+        (statusChange)="onQuickStatusChange($event)"
+      ></app-ticket>
+    </div>
+  </main>
+
+  <!-- Dedicated Ticket Form Modal -->
+  <app-ticket-form
+    [isOpen]="isFormModalOpen()"
+    [initialTicket]="editingTicket"
+    [isSubmitting]="isSubmitting()"
+    [serverError]="formServerError()"
+    (save)="onSaveTicket($event)"
+    (cancel)="closeFormModal()"
+  ></app-ticket-form>
+
+  <!-- Dedicated Delete Confirmation Modal -->
+  <app-confirm-dialog
+    [isOpen]="isConfirmModalOpen()"
+    [itemTitle]="deletingTicket?.title || ''"
+    (confirm)="onConfirmDelete()"
+    (cancel)="closeDeleteModal()"
+  ></app-confirm-dialog>
+</div>

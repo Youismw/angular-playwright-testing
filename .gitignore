@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Production & Build outputs
+dist/
+*/dist/
+.angular/
+*/.angular/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Playwright Test Execution Artifacts
+.auth/
+*/.auth/
+test-results/
+*/test-results/
+playwright-report/
+*/playwright-report/
+results/
+*/results/
+blob-report/
+
+# IDE & OS Metadata
+.vscode/*
+!.vscode/extensions.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+

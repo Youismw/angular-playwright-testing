@@ -1,0 +1,120 @@
+<div class="login-page">
+  <app-header variant="login" badgeText="ARCHITECTURAL EDITION" [showUserActions]="false"></app-header>
+
+  <main class="login-stage">
+    <div class="hero-header">
+      <h1 class="hero-title">Resolution makes it real</h1>
+      <p class="hero-subtitle">Architectural issue orchestration for high-velocity engineering.</p>
+    </div>
+
+    <div class="login-card">
+      <!-- Tabs: Sign In / Create Account -->
+      <div class="auth-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          data-testid="tab-login"
+          [class.active]="isLoginMode()"
+          (click)="setMode(true)"
+          class="auth-tab"
+        >
+          Sign In
+        </button>
+        <button
+          type="button"
+          role="tab"
+          data-testid="tab-register"
+          [class.active]="!isLoginMode()"
+          (click)="setMode(false)"
+          class="auth-tab"
+        >
+          Create Account
+        </button>
+      </div>
+
+      <div class="card-header">
+        <h2>{{ isLoginMode() ? 'Sign In' : 'Create Account' }}</h2>
+        <p class="card-description">
+          {{ isLoginMode() ? 'Access your engineering ticket stream' : 'Set up your personal ticket workspace' }}
+        </p>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" class="login-form">
+        <div *ngIf="errorMessage()" data-testid="login-error" role="alert" class="alert-box alert-danger">
+          <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ errorMessage() }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input
+            id="email"
+            type="email"
+            data-testid="login-email"
+            [(ngModel)]="email"
+            name="email"
+            [placeholder]="isLoginMode() ? 'qa.user@quicktix.test' : 'you@example.com'"
+            required
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">{{ isLoginMode() ? 'Password' : 'Password (min. 6 characters)' }}</label>
+          <input
+            id="password"
+            type="password"
+            data-testid="login-password"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="••••••••••••"
+            required
+            [autocomplete]="isLoginMode() ? 'current-password' : 'new-password'"
+          />
+        </div>
+
+        <button
+          type="submit"
+          data-testid="login-submit"
+          class="btn btn-primary btn-block"
+          [disabled]="loading()"
+        >
+          {{ loading() ? (isLoginMode() ? 'Signing In...' : 'Creating Account...') : (isLoginMode() ? 'Sign In' : 'Create Account') }}
+        </button>
+      </form>
+
+      <div class="mode-switch">
+        <span *ngIf="isLoginMode()">Don't have an account? </span>
+        <span *ngIf="!isLoginMode()">Already have an account? </span>
+        <button
+          type="button"
+          (click)="setMode(!isLoginMode())"
+          class="btn-switch-mode"
+          data-testid="auth-switch-mode"
+        >
+          {{ isLoginMode() ? 'Create an account' : 'Sign in' }}
+        </button>
+      </div>
+
+      <footer *ngIf="isLoginMode()" class="login-footer">
+        <p class="demo-hint">Developer credentials: <code>qa.user@quicktix.test</code> / <code>Passw0rd!test</code> (Persistent tickets)</p>
+        <button
+          type="button"
+          (click)="fillDemoCredentials(true)"
+          class="btn-demo-fill"
+          data-testid="auto-signin-demo"
+        >
+          <svg class="btn-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          Auto Sign In with Demo Account
+        </button>
+        <p class="demo-subhint">Note: Password has a zero <code>0</code>, not the letter <code>o</code>.</p>
+      </footer>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,29 @@
+<header [class]="variant === 'login' ? 'topbar' : 'navbar'">
+  <div [class]="variant === 'login' ? 'topbar-inner' : 'nav-container'">
+    <div [class]="variant === 'login' ? 'brand-monogram' : 'nav-brand'">
+      <svg class="brand-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      <span [class]="variant === 'login' ? 'brand-title' : 'brand-name'">QUICKTIX</span>
+      @if (variant !== 'login') {
+        <span class="brand-badge">{{ badgeText }}</span>
+      }
+    </div>
+
+    @if (variant === 'login') {
+      <span class="topbar-tag">{{ badgeText }}</span>
+    }
+
+    @if (variant !== 'login' && showUserActions) {
+      <div class="nav-actions">
+        <span class="nav-user-label">{{ userEmail }}</span>
+        @if (userRole === 'admin') {
+          <span class="role-badge admin" data-testid="user-role-badge">ADMIN</span>
+        }
+        <button type="button" (click)="onLogout()" class="btn btn-secondary btn-sm">
+          Sign Out
+        </button>
+      </div>
+    }
+  </div>
+</header>
