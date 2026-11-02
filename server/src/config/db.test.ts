@@ -5,6 +5,8 @@ test.describe('Database Isolation & URI Resolution', () => {
 
   test('should resolve unified main database and isolate dev vs test environments', () => {
     const originalEnv = process.env.NODE_ENV;
+    const originalMongoUri = process.env.MONGO_URI;
+    delete process.env.MONGO_URI;
 
     process.env.NODE_ENV = 'development';
     const devUri = resolveDatabaseUri();
@@ -17,11 +19,16 @@ test.describe('Database Isolation & URI Resolution', () => {
     expect(testDbName).toBe('quicktix_test');
 
     expect(devUri).not.toBe(testUri);
+    if (originalMongoUri) process.env.MONGO_URI = originalMongoUri;
+    else delete process.env.MONGO_URI;
     process.env.NODE_ENV = originalEnv;
   });
 
   test('should ensure database name ends with _test in test environment', () => {
     const originalEnv = process.env.NODE_ENV;
+    const originalMongoUri = process.env.MONGO_URI;
+    delete process.env.MONGO_URI;
+
     process.env.NODE_ENV = 'test';
 
     const testUri = resolveDatabaseUri();
@@ -29,6 +36,8 @@ test.describe('Database Isolation & URI Resolution', () => {
 
     expect(testDbName.endsWith('_test')).toBe(true);
 
+    if (originalMongoUri) process.env.MONGO_URI = originalMongoUri;
+    else delete process.env.MONGO_URI;
     process.env.NODE_ENV = originalEnv;
   });
 
