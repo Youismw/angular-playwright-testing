@@ -40,6 +40,19 @@ jobs:
   unit-tests:
     name: Client & Server Unit Tests
     runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports: ['27017:27017']
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1}).ok'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://localhost:27017/quicktix_test
+      JWT_SECRET: ci-only-secret-do-not-use-in-production
     steps:
       - uses: actions/checkout@v4
 
