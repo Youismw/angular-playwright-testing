@@ -72,6 +72,7 @@ function getWorkerToken(workerId: number): string | null {
 
   const baseDir = typeof __dirname !== 'undefined' ? __dirname : (import.meta as any).dirname || process.cwd();
   const candidateDirs = [
+    path.resolve(baseDir, '..', '..', '.auth'),
     path.resolve(process.cwd(), '.auth'),
     path.resolve(baseDir, '..', '.auth'),
     path.resolve(baseDir, '.auth'),
@@ -141,6 +142,7 @@ export const test = baseTest.extend<
 
   context: async ({ browser, baseURL, _workerPool, storageState }, use, testInfo) => {
     const workerId = resolveAssignedWorker(testInfo.file);
+    const resolvedBaseURL = baseURL || process.env.BASE_URL || 'http://localhost:3100';
     process.env.ASSIGNED_WORKER_INDEX = String(workerId);
 
     // Check directly whether the suite requested an unauthenticated state via `test.use({ storageState: { cookies: [], origins: [] } })`
@@ -162,7 +164,7 @@ export const test = baseTest.extend<
       if (_workerPool.context) {
         await _workerPool.context.close().catch(() => {});
       }
-      const ctx = await browser.newContext({ baseURL });
+      const ctx = await browser.newContext({ baseURL: resolvedBaseURL });
       const pg = await ctx.newPage();
 
       // Track if a test registers a permanent addInitScript so the next test gets a clean context
@@ -251,12 +253,13 @@ export const test = baseTest.extend<
   autoReset: [
     async ({ request, baseURL, _workerPool }, use, testInfo) => {
       const workerId = resolveAssignedWorker(testInfo.file);
+      const resolvedBaseURL = baseURL || process.env.BASE_URL || 'http://localhost:3100';
       _workerPool.lastWorkerId = workerId;
-      _workerPool.lastBaseURL = baseURL || process.env.BASE_URL || 'http://localhost:3100';
+      _workerPool.lastBaseURL = resolvedBaseURL;
       process.env.ASSIGNED_WORKER_INDEX = String(workerId);
 
       // 1. Trigger deterministic database wipe and baseline re-seed for THIS PREASSIGNED WORKER ONLY
-      const res = await request.post(`/api/test/reset?worker=${workerId}`);
+      const res = await request.post(`${resolvedBaseURL}/api/test/reset?worker=${workerId}`);
 
       // 2. Defensive check: Fail immediately if the test reset endpoint is unreachable
       if (!res.ok()) {

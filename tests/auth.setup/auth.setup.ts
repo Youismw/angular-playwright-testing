@@ -27,6 +27,7 @@
 
 import { test as setup, expect } from '@playwright/test';
 import fs from 'fs';
+import path from 'path';
 import { getWorkerUser, getForeignUser, getWorkerTickets, TEST_USERS } from '../fixtures/mock-data.js';
 
 const NUM_WORKERS = 5; // Pre-authenticates all 5 deterministic workers (Workers 1..5)
@@ -115,8 +116,10 @@ const WORKER_AUTH_FILE_METADATA: Record<
 
 // [ASSIGNED WORKER: Worker 1] — Global authentication setup always runs on Worker 1
 setup('authenticate all 5 deterministic worker users and save storageStates', async ({ request, baseURL }) => {
+  const origin = baseURL || process.env.BASE_URL || 'http://localhost:3100';
+
   // 1. Reset database to clean seeded baseline for all 5 workers
-  const resetRes = await request.post('/api/test/reset?all=true');
+  const resetRes = await request.post(`${origin}/api/test/reset?all=true`);
   if (!resetRes.ok()) {
     const text = await resetRes.text();
     throw new Error(
@@ -126,11 +129,12 @@ setup('authenticate all 5 deterministic worker users and save storageStates', as
   }
 
   // 2. Ensure storageState target directory exists and purge any legacy user.json / user-0.json files
-  const authDir = '.auth';
+  const currentDir = typeof __dirname !== 'undefined' ? __dirname : (import.meta as any).dirname || process.cwd();
+  const authDir = path.resolve(currentDir, '..', '..', '.auth');
   if (!fs.existsSync(authDir)) {
     fs.mkdirSync(authDir, { recursive: true });
   } else {
-    for (const legacyFile of ['.auth/user.json', '.auth/user-0.json']) {
+    for (const legacyFile of [path.join(authDir, 'user.json'), path.join(authDir, 'user-0.json')]) {
       if (fs.existsSync(legacyFile)) {
         fs.unlinkSync(legacyFile);
       }
@@ -138,7 +142,6 @@ setup('authenticate all 5 deterministic worker users and save storageStates', as
   }
 
   // 3. Authenticate strictly Workers 1 through 5 concurrently in parallel
-  const origin = baseURL || 'http://localhost:3100';
   const workers = Array.from({ length: NUM_WORKERS }, (_, i) => i + 1); // [1, 2, 3, 4, 5]
 
   await Promise.all(
@@ -148,7 +151,7 @@ setup('authenticate all 5 deterministic worker users and save storageStates', as
       const workerTickets = getWorkerTickets(w);
       const meta = WORKER_AUTH_FILE_METADATA[w];
 
-      const loginRes = await request.post('/api/auth/login', {
+      const loginRes = await request.post(`${origin}/api/auth/login`, {
         data: { email: workerUser.email, password: workerUser.password },
       });
       expect(loginRes.ok(), `Worker ${w} (${workerUser.email}) login failed with status ${loginRes.status()}`).toBe(true);
@@ -210,7 +213,7 @@ setup('authenticate all 5 deterministic worker users and save storageStates', as
         2
       );
 
-      fs.writeFileSync(`.auth/user-${w}.json`, statePayload, 'utf8');
+      fs.writeFileSync(path.join(authDir, `user-${w}.json`), statePayload, 'utf8');
     })
   );
 });

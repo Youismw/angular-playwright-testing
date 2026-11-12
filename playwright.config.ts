@@ -68,6 +68,9 @@ const isCI = process.env.CI === 'true' || process.env.CI === '1';
 
 const testPort = process.env.TEST_PORT || '3100';
 const testBaseUrl = process.env.BASE_URL || `http://localhost:${testPort}`;
+const rootDir = path.basename(process.cwd()).toLowerCase() === 'tests'
+  ? path.resolve(process.cwd(), '..')
+  : process.cwd();
 
 // Include optional cross-browser projects only when explicitly requested via --project
 const includeCrossBrowser = process.argv.some((arg) =>
@@ -75,8 +78,8 @@ const includeCrossBrowser = process.argv.some((arg) =>
 );
 
 // Skip redundant Angular build if dist bundle already exists (use FORCE_BUILD=true to rebuild)
-const clientDist = path.resolve('client/dist/client/browser/index.html');
-const clientDistAlt = path.resolve('client/dist/browser/index.html');
+const clientDist = path.resolve(rootDir, 'client/dist/client/browser/index.html');
+const clientDistAlt = path.resolve(rootDir, 'client/dist/browser/index.html');
 const clientDistExists = fs.existsSync(clientDist) || fs.existsSync(clientDistAlt);
 const serverStartCommand =
   clientDistExists && process.env.FORCE_BUILD !== 'true'
@@ -84,7 +87,9 @@ const serverStartCommand =
     : 'npm run build --prefix client && npm start --prefix server';
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: path.resolve(rootDir, 'tests'),
+  outputDir: path.resolve(rootDir, 'test-results'),
+  testMatch: ['**/*.@(spec|test).ts', '**/*.setup.ts'],
   fullyParallel: false,
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-chromium{-snapshotSuffix}{ext}',
   workers: isCI ? 2 : 5,
@@ -94,9 +99,9 @@ export default defineConfig({
   expect: { timeout: 5_000 },
   reporter: [
     ['list'],
-    ['html', { open: 'never' }],
-    ['junit', { outputFile: 'results/junit.xml' }],
-    ['./tests/fixtures/auto-open-reporter.ts'],
+    ['html', { open: 'never', outputFolder: path.resolve(rootDir, 'playwright-report') }],
+    ['junit', { outputFile: path.resolve(rootDir, 'results/junit.xml') }],
+    [path.resolve(rootDir, 'tests/fixtures/auto-open-reporter.ts')],
   ],
   use: {
     baseURL: testBaseUrl,
@@ -106,6 +111,7 @@ export default defineConfig({
   },
   webServer: process.env.NO_WEBSERVER ? undefined : {
     command: serverStartCommand,
+    cwd: rootDir,
     url: `${testBaseUrl}/api/health`,
     reuseExistingServer: !isCI,
     timeout: 60_000,
@@ -121,6 +127,10 @@ export default defineConfig({
       name: 'setup',
       testMatch: SETUP_MATCH,
       ...({ workers: 1 } as any),
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: testBaseUrl,
+      },
     },
     {
       name: 'worker-1',
@@ -128,7 +138,8 @@ export default defineConfig({
       ...({ workers: 1 } as any),
       use: {
         ...devices['Desktop Chrome'],
-        storageState: '.auth/user-1.json',
+        baseURL: testBaseUrl,
+        storageState: path.resolve(rootDir, '.auth/user-1.json'),
       },
       dependencies: ['setup'],
     },
@@ -138,7 +149,8 @@ export default defineConfig({
       ...({ workers: 1 } as any),
       use: {
         ...devices['Desktop Chrome'],
-        storageState: '.auth/user-2.json',
+        baseURL: testBaseUrl,
+        storageState: path.resolve(rootDir, '.auth/user-2.json'),
       },
       dependencies: ['setup'],
     },
@@ -148,7 +160,8 @@ export default defineConfig({
       ...({ workers: 1 } as any),
       use: {
         ...devices['Desktop Chrome'],
-        storageState: '.auth/user-3.json',
+        baseURL: testBaseUrl,
+        storageState: path.resolve(rootDir, '.auth/user-3.json'),
       },
       dependencies: ['setup'],
     },
@@ -158,7 +171,8 @@ export default defineConfig({
       ...({ workers: 1 } as any),
       use: {
         ...devices['Desktop Chrome'],
-        storageState: '.auth/user-4.json',
+        baseURL: testBaseUrl,
+        storageState: path.resolve(rootDir, '.auth/user-4.json'),
       },
       dependencies: ['setup'],
     },
@@ -168,7 +182,8 @@ export default defineConfig({
       ...({ workers: 1 } as any),
       use: {
         ...devices['Desktop Chrome'],
-        storageState: '.auth/user-5.json',
+        baseURL: testBaseUrl,
+        storageState: path.resolve(rootDir, '.auth/user-5.json'),
       },
       dependencies: ['setup'],
     },
@@ -178,7 +193,8 @@ export default defineConfig({
             name: 'chromium',
             use: {
               ...devices['Desktop Chrome'],
-              storageState: '.auth/user-1.json',
+              baseURL: testBaseUrl,
+              storageState: path.resolve(rootDir, '.auth/user-1.json'),
             },
             dependencies: ['setup'],
           },
@@ -187,7 +203,8 @@ export default defineConfig({
             testIgnore: /visual/,
             use: {
               ...devices['Desktop Firefox'],
-              storageState: '.auth/user-1.json',
+              baseURL: testBaseUrl,
+              storageState: path.resolve(rootDir, '.auth/user-1.json'),
             },
             dependencies: ['setup'],
           },
@@ -196,7 +213,8 @@ export default defineConfig({
             testIgnore: /visual/,
             use: {
               ...devices['Desktop Safari'],
-              storageState: '.auth/user-1.json',
+              baseURL: testBaseUrl,
+              storageState: path.resolve(rootDir, '.auth/user-1.json'),
             },
             dependencies: ['setup'],
           },
@@ -205,7 +223,8 @@ export default defineConfig({
             testIgnore: /visual/,
             use: {
               ...devices['Pixel 7'],
-              storageState: '.auth/user-1.json',
+              baseURL: testBaseUrl,
+              storageState: path.resolve(rootDir, '.auth/user-1.json'),
             },
             dependencies: ['setup'],
           },
