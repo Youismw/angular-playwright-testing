@@ -38,4 +38,7 @@ Thumbs.db
 # Local Containers & Infrastructure
 docker-compose.yml
 
+# AI Agent Instructions
+AGENTS.md
+GEMINI.md
 
